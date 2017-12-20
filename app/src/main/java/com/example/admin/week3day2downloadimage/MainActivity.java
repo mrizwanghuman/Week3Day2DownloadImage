@@ -1,7 +1,10 @@
 package com.example.admin.week3day2downloadimage;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.ContextWrapper;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Environment;
@@ -19,46 +22,40 @@ import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String TAG = "main";
+    private static final String TAG = "mainTest";
+public static final String mBroadcastStringAction="Training";
+    private IntentFilter intentFilter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        ImageView image = findViewById(R.id.imageview);
-        if (android.os.Build.VERSION.SDK_INT > 9)
-        {
-            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-            StrictMode.setThreadPolicy(policy);
-        }
-        String imageURl="http://4.bp.blogspot.com/-8MpkNOe73_Y/UQ5sJHgEv-I/AAAAAAAADHY/WFVg6JO1rxk/s1600/glass-3d3.jpg";
-        Bitmap bitmap;
-        try {
-            String file_path = Environment.getExternalStorageDirectory().getAbsolutePath()+
-                    "/SavedPic";
+//        ImageView image = findViewById(R.id.imageview);
+//
+        intentFilter = new IntentFilter();
+        intentFilter.addAction(mBroadcastStringAction);
+        Intent serviceIntent = new Intent(this, MyService.class);
+        startService(serviceIntent);
+        //registerReceiver(broadcastReceiver, intentFilter);
+   }
+   BroadcastReceiver broadcastReceiver= new BroadcastReceiver() {
+       @Override
+       public void onReceive(Context context, Intent intent) {
+           if (intent.getAction().equals(mBroadcastStringAction)){
+               Log.d(TAG, "onReceive: "+intent.getStringExtra("from"));
+           }
+       }
+   };
 
-            File dir = new File(file_path);
-            if(!dir.exists()){
-                dir.mkdir();
-            }
-            Log.d(TAG, "onCreate: "+file_path);
-            InputStream inputStream = new URL(imageURl).openStream();
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(broadcastReceiver, intentFilter);
+    }
 
-            bitmap= BitmapFactory.decodeStream(inputStream);
-            image.setImageBitmap(bitmap);
-           // Log.d(TAG, "onCreate: "+bitmap.toString());
-            inputStream.close();
-
-            File file = new File(dir, "sketchpad.jpg");
-            FileOutputStream fOut = new FileOutputStream(file);
-
-
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 85, fOut);
-            Log.d(TAG, "onCreate: "+file.getAbsolutePath());
-            fOut.flush();
-            fOut.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        registerReceiver(broadcastReceiver, intentFilter);
     }
 }
